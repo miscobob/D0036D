@@ -2,7 +2,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -25,6 +24,8 @@ private:
     struct sockaddr_in sa;
     int socket_fd;
     int nfds;
+    bool closed = false;
+    void close_fd(int fd_i);
 
     /* data */
 public:

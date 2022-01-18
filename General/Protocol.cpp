@@ -1,17 +1,271 @@
 #include "Protocol.h"
 #include <iterator>
-#include <string.h>
+#include <iostream>
 namespace general{
-    JoinMsg get_join(char* name)
+    MsgHead get_head(int id, int seq_no, MsgType type)
+    {
+        MsgHead head;
+        head.id = id;
+        head.type = type;
+        head.length = 0; // just setting it to zero
+        return head;
+    }
+    JoinMsg get_join(std::string name)
     {
         JoinMsg msg;
-        msg.head.id = 0;
-        msg.head.seq_no = 0;
-        msg.head.type = MsgType::Join;
-        strncpy(msg.name, name, 32);
+        msg.head = get_head(0,0, MsgType::Join);
+        strcpy(msg.name, name.c_str());
         msg.desc = ObjectDesc::Human;
         msg.form = ObjectForm::Cube;
         msg.head.length = sizeof(msg);
         return msg;
     }
+    LeaveMsg get_leave(int id, int seq_no)
+    {
+        LeaveMsg msg;
+        msg.head = get_head(id, seq_no, MsgType::Leave);
+        return msg;
+    }
+    ChangeMsg get_change(int id, int seq_no, ChangeType type)
+    {
+        ChangeMsg msg;
+        msg.head = get_head(id, seq_no, MsgType::Change);
+        msg.type = type;
+        return msg;
+    }
+    EventMsg get_event(int id, int seq_no, EventType type)
+    {
+        EventMsg msg;
+        msg.head = get_head(id, seq_no, MsgType::Event);
+        msg.type = type;
+        return msg;
+    }
+    TextMessageMsg get_text(int id, int seq_no, std::string text)
+    {
+        TextMessageMsg msg;
+        msg.head = get_head(id, seq_no, MsgType::TextMessage);
+        strcpy(msg.text, text.c_str());
+        return msg;
+    }
+    NewPlayerMsg get_newPlayer(int id, int seq_no, ObjectDesc desc, ObjectForm form, std::string name)
+    {
+        NewPlayerMsg msg;
+        msg.msg = get_change(id, seq_no, ChangeType::NewPlayer);
+        msg.desc = desc;
+        msg.form = form;
+        strcpy(msg.name, name.c_str());
+        msg.msg.head.length = sizeof(msg);
+        return msg;
+
+    }
+    PlayerLeaveMsg get_leavePlayer(int id, int seq_no)
+    {
+        PlayerLeaveMsg msg;
+        msg.msg = get_change(id, seq_no, ChangeType::PlayerLeave);
+        msg.msg.head.length = sizeof(msg);
+        return msg;
+    }
+    NewPlayerPositionMsg get_newPlayerPos(int id, int seq_no,int x, int y, int v_x, int v_y)
+    {
+        NewPlayerPositionMsg msg;
+        msg.msg = get_change(id, seq_no, ChangeType::NewPlayerPosition);
+        msg.pos.x = x;
+        msg.pos.y = y;
+        msg.dir.x = v_x;
+        msg.dir.y = v_y;
+        msg.msg.head.length = sizeof(msg);
+        return msg;
+    }
+
+
+    std::string serilize(MsgHead head)
+    {
+        std::string res = "length=|";
+        res.append(std::to_string(head.length));
+        res.append("|seq_no=|");
+        res.append(std::to_string(head.seq_no));
+        res.append("|id=|");
+        res.append(std::to_string(head.id));
+        int t = (int)head.type;
+        res.append("|type=|");
+        res.append(std::to_string(t));
+        res.append("|");
+        return res;
+    }
+
+    std::string serilize(JoinMsg msg)
+    {
+        std::string res_str = serilize(msg.head);
+        res_str.append("desc=|");
+        int t = (int)msg.desc;
+        res_str.append(std::to_string(t));
+        res_str.append("|form=");
+        t = (int)msg.form;
+        res_str.append(std::to_string(t));
+        res_str.append("|name=|");
+        res_str.append(msg.name);
+        res_str.append("|");
+        return res_str;
+
+    }
+    std::string serilize(LeaveMsg msg)
+    {
+        return  serilize(msg.head);
+    }
+    std::string serilize(ChangeMsg msg)
+    {
+        std::string res_str = serilize(msg.head);
+        int t = (int)msg.type;
+        res_str.append("change_type=|");
+        res_str.append(std::to_string(t));
+        res_str.append("|");
+        return res_str;
+    }
+    std::string serilize(EventMsg msg)
+    {
+        std::string res_str = serilize(msg.head);
+        int t = (int)msg.type;
+        res_str.append("event_type=|");
+        res_str.append(std::to_string(t));
+        res_str.append("|");
+        return res_str;
+    }
+    std::string serilize(TextMessageMsg  msg)
+    {
+        std::string res_str = serilize(msg.head);
+        res_str.append("text=|");
+        res_str.append(msg.text);
+        res_str.append("|");
+        return res_str;
+    }
+    std::string serilize(NewPlayerMsg msg)
+    {
+        std::string res_str  = serilize(msg.msg);
+        res_str.append("desc=|");
+        int t = (int)msg.desc;
+        res_str.append(std::to_string(t));
+        res_str.append("|form=");
+        t = (int)msg.form;
+        res_str.append(std::to_string(t));
+        res_str.append("|name=|");
+        res_str.append(msg.name);
+        res_str.append("|");
+        return res_str;
+    }
+    std::string serilize(PlayerLeaveMsg msg)
+    {
+        return serilize(msg.msg);
+    }
+    std::string serilize(NewPlayerPositionMsg msg)
+    {
+        std::string res_str  = serilize(msg.msg);
+        res_str.append("pos=|");
+        res_str.append(serilize(msg.pos));
+        res_str.append("|");
+        res_str.append("dir=|");
+        res_str.append(serilize(msg.dir));
+        res_str.append("|");
+        return res_str;
+
+    }
+    std::string serilize(MoveEvent event)
+    {
+        std::string res_str  = serilize(event.event);
+        res_str.append(serilize(event.pos));
+        res_str.append(serilize(event.dir));
+        return res_str;
+
+    }
+    std::string serilize(Coordinate cord)
+    {
+        std::string res_str = "x=|";
+        res_str.append(std::to_string(cord.x));
+        res_str.append("|y=|");
+        res_str.append(std::to_string(cord.y));
+        res_str.append("|");
+        return res_str;
+    }
+    MsgHead deserilize(std::string &msg)
+    {
+        MsgHead head;
+        std::string tag = "length=";
+        std::string length = retrive_value(msg, tag);
+        if(length.empty())
+            return head;
+        tag.clear();
+        tag.append("seq_no=");
+        std::string seq_no = retrive_value(msg, tag);
+        if(seq_no.empty())
+            return head;
+        tag.clear();
+        tag.append("id=");
+        std::string id = retrive_value(msg, tag);
+        if(id.empty())
+            return head;
+        tag.clear();
+        tag.append("type=");
+        std::string type = retrive_value(msg, tag);
+        if(type.empty())
+            return head;
+        head.length = std::stoi(length);
+        head.seq_no = std::stoi(seq_no);
+        head.id = std::stoi(id);
+        head.type = (MsgType)std::stoi(type);
+        return head;
+        
+    }
+    JoinMsg deserilize(Msghead msg_head, std::string msg)
+    {
+        general::JoinMsg msg_ret;
+        msg_ret.head = head;
+        
+        
+
+    }
+    LeaveMsg deserilize(Msghead msg_head,std::string msg)
+    {
+
+    }
+    //ChangeMsg deserilize(Msghead msg_head,std::string msg);
+    //EventMsg deserilize(Msghead msg_head,std::string msg);
+    //TextMessageMsg deserilize(Msghead msg_head, std::string  msg);
+    //NewPlayerMsg deserilize(Msghead msg_head, std::string msg);
+    //PlayerLeaveMsg deserilize(Msghead msg_head,std::string msg);
+    //NewPlayerPositionMsg deserilize(Msghead msg_head,std::string msg);
+    //MoveEvent deserilize(std::string msg);
+    //Coordinate deserilize(std::string msg);
+
+    std::string retrive_value(std::string &msg, std::string tag)
+    {
+        std::size_t found = msg.find(tag);
+        if(found == std::string::npos)
+        {
+            std::cout<<"failed to find tag "<< tag <<" in message \n";
+            std::cout<< msg<< "\n";
+            return "";
+        }
+        msg.erase(0,(int)found);
+        while(true){
+            if((msg.front()) == '|')
+            {
+                msg.erase(0,1);
+                break;
+            }
+            msg.erase(0,1);
+        }
+        std::string value = "";
+        while(true){
+            if((msg.front()) == '|')
+            {
+                msg.erase(0,1);
+                break;
+            }
+            value.push_back(msg.front());
+            msg.erase(0,1);
+            
+        }
+        return value;
+    }
+
+
 }

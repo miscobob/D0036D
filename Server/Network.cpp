@@ -2,6 +2,9 @@
 #include "Network.h"
 #include <stdexcept>
 #include <fcntl.h>
+#include <string>
+#include "../General/Protocol.h"
+
 namespace lab{
 Network::Network(/* args */)
 {
@@ -104,23 +107,14 @@ Network::Network(/* args */)
     {
         this->fd_write_set[i].fd = -1;
         this->fd_write_set[i].events = POLLOUT;
-    }/*
-    while(true)
-    {
-    int new_fd = accept(socket_fd, NULL, NULL);
-    if(new_fd == -1)
-    {
-        quit("accept failed", EXIT_FAILURE);
     }
-    close(new_fd);
-    quit("accept succeded", EXIT_SUCCESS);
-    }*/
-    //printf("5");
 }
 
 
 void Network::poll_fds()
 {
+    if(this->closed)
+        return;
     int res;
     res = poll(this->fd_read_set, this->nfds, TIME_OUT);
     if(res == -1) {
@@ -183,11 +177,38 @@ void Network::poll_fds()
                     if(res == -1)
                     {
                         printf("%d\n", i);
-                        quit("read failed", EXIT_FAILURE);
+                        printf("read failed\n");
                         //throw "read failed";
                     }
                     else
                     {
+                        int write_poll_res = poll(this->fd_write_set, this->nfds-1, 100);
+                        if(write_poll_res == 0)
+                        {
+                            printf("Could not write a reply");
+                        }
+                        else if(write_poll_res < 0)
+                        {
+                            printf("poll failed");
+                        }
+                        else
+                        {   
+                            std::string name = "Example";
+                                       
+                            general::JoinMsg msg = general::get_join(name);
+                            std::string rply = general::serilize(msg);
+                            
+                            for(int i = 0; i<nfds-1; i++)
+                            {
+                                if(fd_write_set[i].revents&POLLOUT)
+                                {
+                                    send(this->fd_write_set[i].fd, rply.c_str(),rply.size()+1, 0);
+                                    printf("Reply sent to %d\n",this->fd_write_set[i].fd);
+                                }
+                            }
+                            printf("done sending");
+                            
+                        }
                         printf("%.*s\n",(int)sizeof(buf),buf);
                     }
                 }
@@ -195,17 +216,22 @@ void Network::poll_fds()
             //if(this->fd_read_set[i].revents&POLLRDHUP == POLLRDHUP)
             if(this->fd_read_set[i].revents&POLLRDHUP == POLLRDHUP && i != 0)
             {
-                int closed_fd = fd_read_set[i].fd;
-                close(fd_read_set[i].fd);
-                fd_read_set[i].fd = -1;
-                fd_write_set[i-1].fd = -1;
-                this->nfds = this->nfds - 1;
-                printf("Connection closed %d \n", closed_fd);
+                this->close_fd(i);
             }
         }
     }
     
 }
+void Network::close_fd(int fd_i)
+{
+    int closed_fd = this->fd_read_set[fd_i].fd;
+    close(fd_read_set[fd_i].fd);
+    fd_read_set[fd_i].fd = -1;
+    fd_write_set[fd_i-1].fd = -1;
+    this->nfds = this->nfds - 1;
+    printf("Connection closed %d \n", closed_fd);
+}
+
 void Network::quit(const char* message, int status)
 {
     printf("\n%s\n",message);
@@ -214,15 +240,11 @@ void Network::quit(const char* message, int status)
         if(this->fd_read_set[i].fd != -1)
             close(this->fd_read_set[i].fd);
     }
-    exit(status);
+    closed = true;
 }
 
 Network::~Network()
 {
-    for(int i = 0; i<MAX_CONNECTION+1; i++)
-    {
-        if(this->fd_read_set[i].fd != -1)
-            close(this->fd_read_set[i].fd);
-    }
+    this->quit("Destructor called", EXIT_SUCCESS);
 }
 }
