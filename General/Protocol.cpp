@@ -1,6 +1,7 @@
 #include "Protocol.h"
 #include <iterator>
 #include <iostream>
+#include <algorithm>
 namespace general{
     MsgHead get_head(int id, int seq_no, MsgType type)
     {
@@ -65,7 +66,7 @@ namespace general{
         msg.msg.head.length = sizeof(msg);
         return msg;
     }
-    NewPlayerPositionMsg get_newPlayerPos(int id, int seq_no,int x, int y, int v_x, int v_y)
+    NewPlayerPositionMsg get_newPlayerPos(int id, int seq_no, int x, int y, int v_x, int v_y)
     {
         NewPlayerPositionMsg msg;
         msg.msg = get_change(id, seq_no, ChangeType::NewPlayerPosition);
@@ -99,7 +100,7 @@ namespace general{
         res_str.append("desc=|");
         int t = (int)msg.desc;
         res_str.append(std::to_string(t));
-        res_str.append("|form=");
+        res_str.append("|form=|");
         t = (int)msg.form;
         res_str.append(std::to_string(t));
         res_str.append("|name=|");
@@ -144,7 +145,7 @@ namespace general{
         res_str.append("desc=|");
         int t = (int)msg.desc;
         res_str.append(std::to_string(t));
-        res_str.append("|form=");
+        res_str.append("|form=|");
         t = (int)msg.form;
         res_str.append(std::to_string(t));
         res_str.append("|name=|");
@@ -161,8 +162,7 @@ namespace general{
         std::string res_str  = serilize(msg.msg);
         res_str.append("pos=|");
         res_str.append(serilize(msg.pos));
-        res_str.append("|");
-        res_str.append("dir=|");
+        res_str.append("|dir=|");
         res_str.append(serilize(msg.dir));
         res_str.append("|");
         return res_str;
@@ -171,69 +171,161 @@ namespace general{
     std::string serilize(MoveEvent event)
     {
         std::string res_str  = serilize(event.event);
+        res_str.append("pos=|");
         res_str.append(serilize(event.pos));
+        res_str.append("|dir=|");
         res_str.append(serilize(event.dir));
+        res_str.append("|");
         return res_str;
 
     }
     std::string serilize(Coordinate cord)
     {
-        std::string res_str = "x=|";
+        std::string res_str = "x=:";
         res_str.append(std::to_string(cord.x));
-        res_str.append("|y=|");
+        res_str.append(":y=:");
         res_str.append(std::to_string(cord.y));
-        res_str.append("|");
+        res_str.append(":");
         return res_str;
     }
-    MsgHead deserilize(std::string &msg)
+    
+    //
+
+    void deserilize(MsgHead &head, std::string &msg)
     {
-        MsgHead head;
         std::string tag = "length=";
         std::string length = retrive_value(msg, tag);
         if(length.empty())
-            return head;
+            return;
         tag.clear();
         tag.append("seq_no=");
         std::string seq_no = retrive_value(msg, tag);
         if(seq_no.empty())
-            return head;
+            return;
         tag.clear();
         tag.append("id=");
         std::string id = retrive_value(msg, tag);
         if(id.empty())
-            return head;
+            return;
         tag.clear();
         tag.append("type=");
         std::string type = retrive_value(msg, tag);
         if(type.empty())
-            return head;
-        head.length = std::stoi(length);
+            return;
+        head.length= std::stoi(length);
         head.seq_no = std::stoi(seq_no);
         head.id = std::stoi(id);
         head.type = (MsgType)std::stoi(type);
-        return head;
         
     }
-    JoinMsg deserilize(Msghead msg_head, std::string msg)
+    void deserilize(JoinMsg &join, std::string &msg)
     {
-        general::JoinMsg msg_ret;
-        msg_ret.head = head;
-        
-        
-
+        std::string tag = "desc=";
+        std::string desc = retrive_value(msg, tag);
+        if(desc.empty())
+            return;
+        tag.clear();
+        tag.append("form=");
+        std::string form = retrive_value(msg, tag);
+        if(form.empty())
+            return;
+        tag.clear();
+        tag.append("name=");
+        std::string name = retrive_value(msg, tag);
+        if(name.empty())
+            return;
+        join.desc = (ObjectDesc)std::stoi(desc);  
+        join.form = (ObjectForm)std::stoi(form);       
+        strcpy(join.name,name.c_str());
     }
-    LeaveMsg deserilize(Msghead msg_head,std::string msg)
+    void deserilize(ChangeMsg &change,std::string &msg)
     {
-
+        std::string tag = "type=";
+        std::string type = retrive_value(msg, tag);
+        if(type.empty())
+            return;
+        change.type = (ChangeType)std::stoi(type);
     }
-    //ChangeMsg deserilize(Msghead msg_head,std::string msg);
-    //EventMsg deserilize(Msghead msg_head,std::string msg);
-    //TextMessageMsg deserilize(Msghead msg_head, std::string  msg);
-    //NewPlayerMsg deserilize(Msghead msg_head, std::string msg);
-    //PlayerLeaveMsg deserilize(Msghead msg_head,std::string msg);
-    //NewPlayerPositionMsg deserilize(Msghead msg_head,std::string msg);
-    //MoveEvent deserilize(std::string msg);
-    //Coordinate deserilize(std::string msg);
+    void deserilize(EventMsg &event,std::string &msg)
+    {
+        std::string tag = "type=";
+        std::string type = retrive_value(msg, tag);
+        if(type.empty())
+            return;
+        event.type = (EventType)std::stoi(type);    
+    }
+    void deserilize(TextMessageMsg &text, std::string  &msg)
+    {
+        std::string tag = "text=";
+        std::string textv = retrive_value(msg, tag);
+        if(textv.empty())
+            return;
+        strcpy(text.text, textv.c_str());
+    }
+    void deserilize(NewPlayerMsg &new_player, std::string &msg)
+    {
+        std::string tag = "desc=";
+        std::string desc = retrive_value(msg, tag);
+        if(desc.empty())
+            return;
+        tag.clear();
+        tag.append("form=");
+        std::string form = retrive_value(msg, tag);
+        if(form.empty())
+            return;
+        tag.clear();
+        tag.append("name=");
+        std::string name = retrive_value(msg, tag);
+        if(name.empty())
+            return;
+        new_player.desc = (ObjectDesc)std::stoi(desc);  
+        new_player.form = (ObjectForm)std::stoi(form);       
+        strcpy(new_player.name,name.c_str());
+    }
+    void deserilize(NewPlayerPositionMsg &player_pos,std::string &msg)
+    {
+        std::string tag = "pos=";
+        std::string pos = retrive_value(msg, tag);
+        if(pos.empty())
+            return;
+        tag.clear();
+        tag.append("dir=");
+        std::string dir = retrive_value(msg, tag);
+        if(dir.empty())
+            return;
+        deserilize(player_pos.pos, pos);
+        deserilize(player_pos.dir, dir);
+    }
+    void deserilize(MoveEvent &move_event, std::string &msg)
+    {
+        std::string tag = "pos=";
+        std::string pos = retrive_value(msg, tag);
+        if(pos.empty())
+            return;
+        tag.clear();
+        tag.append("dir=");
+        std::string dir = retrive_value(msg, tag);
+        if(dir.empty())
+            return;
+        deserilize(move_event.pos, pos);
+        deserilize(move_event.dir, dir);
+    }
+
+    void deserilize(Coordinate &coord, std::string &msg)
+    {
+        std::replace(msg.begin(),msg.end(), ':', '|');
+        std::string tag = "x=";
+        std::string x = retrive_value(msg, tag);
+        if(x.empty())
+            return;
+        tag.clear();
+        tag.append("y=");
+        std::string y = retrive_value(msg, tag);
+        if(y.empty());
+            return;
+        coord.x = std::stoi(x);
+        coord.y = std::stoi(y);
+    }
 
     std::string retrive_value(std::string &msg, std::string tag)
     {
@@ -262,10 +354,7 @@ namespace general{
             }
             value.push_back(msg.front());
             msg.erase(0,1);
-            
         }
         return value;
     }
-
-
 }

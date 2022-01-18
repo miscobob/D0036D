@@ -224,66 +224,66 @@ std::string serilize(Coordinate cord);
  * Takes a msg string and returns head of msg. 
  * WARNING MODIFIES STRING.
  */
-MsgHead deserilize(std::string &msg);
+void  deserilize(MsgHead &head, std::string &msg);
 /**
  * Takes a msg string and a msg head and returns a join msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that msg head type is correct
  */
-JoinMsg deserilize(MsgHead msg_head, std::string &msg);
+void deserilize(JoinMsg &join, std::string &msg);
 /**
  * Takes a msg string and a msg head and returns a leave msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that msg head type is correct
  */
-LeaveMsg deserilize(MsgHead msg_head,std::string &msg);
+void deserilize(LeaveMsg &leave, std::string &msg);
 /**
  * Takes a msg string and a msg head and returns a change msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that msg head type is correct
  */
-ChangeMsg deserilize(MsgHead msg_head,std::string &msg);
+void deserilize(ChangeMsg &change,std::string &msg);
 /**
  * Takes a msg string and a msg head and returns a event msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that msg head type is correct
  */
-EventMsg deserilize(MsgHead msg_head,std::string &msg);
+void deserilize(EventMsg &event,std::string &msg);
 /**
  * Takes a msg string and a msg head and returns a text msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that msg head type is correct
  */
-TextMessageMsg deserilize(MsgHead msg_head, std::string &msg);
+void deserilize(TextMessageMsg &text, std::string &msg);
 /**
  * Takes a msg string and a change msg and returns a new player msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that change type is correct
  */
-NewPlayerMsg deserilize(ChangeMsg change_msg, std::string &msg);
+void deserilize(NewPlayerMsg &new_player, std::string &msg);
 /**
  * Takes a msg string and a change msg and returns a player leave msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that change type is correct
  */
-PlayerLeaveMsg deserilize(ChangeMsg change_msg,std::string &msg);
+void deserilize(PlayerLeaveMsg &player_leave,std::string &msg);
 /**
  * Takes a msg string and a change msg and returns a new player position msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that change type is correct
  */
-NewPlayerPositionMsg deserilize(ChangeMsg change_msg,std::string &msg);
+void deserilize(NewPlayerPositionMsg &player_pos,std::string &msg);
 /**
  * Takes a msg string and a evnet msg and returns a move event msg. 
  * WARNING MODIFIES STRING.
  * Does not verify that event type is correct
  */
-MoveEvent deserilize(EventMsg event_msg, std::string &msg);
+void deserilize(EventMsg move_event, std::string &msg);
 /**
- * takes a msg and returns first set of coordinates
+ * takes a string of coord and returns first set of coordinates
  * * WARNING MODIFIES STRING.
  */
-Coordinate deserilize(std::string &msg);
+void deserilize(Coordinate &coord, std::string &msg);
 /**
  * returns value of given tag in msg string and remove all 
  * from begnning of string up to the end marker for the taged value
