@@ -87,11 +87,13 @@ ObjectDesc  desc;
 ObjectForm  form; 
 char  name[MAXNAMELEN];  // nullterminated!,  or empty 
 
-}; 
+};
+ 
 struct PlayerLeaveMsg 
 { 
 ChangeMsg  msg;  //Change  message header with new client id 
-}; 
+};
+
 struct NewPlayerPositionMsg 
 { 
 ChangeMsg  msg;  //Change  message header 
@@ -175,119 +177,5 @@ PlayerLeaveMsg get_leavePlayer(int id, int seq_no);
  * seq_no is the returned msg sequence number
  */
 NewPlayerPositionMsg get_newPlayerPos(int id, int seq_no, int x, int y, int v_x, int v_y);
-/**
- * Takes the head of msg and return a string representation
- */
-std::string serilize(MsgHead head);
-/**
- * Takes a join msg and return a string representation
- */
-std::string serilize(JoinMsg msg);
-/**
- * Takes a leave msg and return a string representation
- */
-std::string serilize(LeaveMsg msg);
-/**
- * Takes a change msg and return a string representation
- */
-std::string serilize(ChangeMsg msg);
-/**
- * Takes a event msg and return a string representation
- */
-std::string serilize(EventMsg msg);
-/**
- * Takes a text msg and return a string representation
- */
-std::string serilize(TextMessageMsg  msg);
-/**
- * Takes a new player msg and return a string representation
- */
-std::string serilize(NewPlayerMsg msg);
-/**
- * Takes a join msg and return a string representation
- */
-std::string serilize(PlayerLeaveMsg msg);
-/**
- * Takes a join msg and return a string representation
- */
-std::string serilize(NewPlayerPositionMsg msg);
-/**
- * Takes a join msg and return a string representation
- */
-std::string serilize(MoveEvent event);
-/**
- * Takes a join msg and return a string representation
- */
-std::string serilize(Coordinate cord);
-//
-/**
- * Takes a msg string and returns head of msg. 
- * WARNING MODIFIES STRING.
- */
-void  deserilize(MsgHead &head, std::string &msg);
-/**
- * Takes a msg string and a msg head and returns a join msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that msg head type is correct
- */
-void deserilize(JoinMsg &join, std::string &msg);
-/**
- * Takes a msg string and a msg head and returns a leave msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that msg head type is correct
- */
-void deserilize(LeaveMsg &leave, std::string &msg);
-/**
- * Takes a msg string and a msg head and returns a change msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that msg head type is correct
- */
-void deserilize(ChangeMsg &change,std::string &msg);
-/**
- * Takes a msg string and a msg head and returns a event msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that msg head type is correct
- */
-void deserilize(EventMsg &event,std::string &msg);
-/**
- * Takes a msg string and a msg head and returns a text msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that msg head type is correct
- */
-void deserilize(TextMessageMsg &text, std::string &msg);
-/**
- * Takes a msg string and a change msg and returns a new player msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that change type is correct
- */
-void deserilize(NewPlayerMsg &new_player, std::string &msg);
-/**
- * Takes a msg string and a change msg and returns a player leave msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that change type is correct
- */
-void deserilize(PlayerLeaveMsg &player_leave,std::string &msg);
-/**
- * Takes a msg string and a change msg and returns a new player position msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that change type is correct
- */
-void deserilize(NewPlayerPositionMsg &player_pos,std::string &msg);
-/**
- * Takes a msg string and a evnet msg and returns a move event msg. 
- * WARNING MODIFIES STRING.
- * Does not verify that event type is correct
- */
-void deserilize(EventMsg move_event, std::string &msg);
-/**
- * takes a string of coord and returns first set of coordinates
- * * WARNING MODIFIES STRING.
- */
-void deserilize(Coordinate &coord, std::string &msg);
-/**
- * returns value of given tag in msg string and remove all 
- * from begnning of string up to the end marker for the taged value
- */
-std::string retrive_value(std::string &msg, std::string tag);
 }
 #endif
