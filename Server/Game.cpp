@@ -3,9 +3,9 @@
 namespace server
 {
 
-Game::Game()
+Game::Game(std::string ip)
 {
-    //this->net;
+    this->net.setup(ip);
 }
 Game::~Game()
 {
@@ -27,6 +27,13 @@ void Game::remove_player(int fd)
     std::map<int, Player*>::iterator it;
     it = players.find(fd);
     players.erase(it);
+    for(std::list<MsgToSend>::iterator it = msg_queue.begin(); it != msg_queue.end(); ++it)
+    {
+        if(it->fd == fd)
+        {
+            it->fd = -1;//marking as not to send easy fix;
+        }
+    }
 }
 void Game::player_join(int fd, general::JoinMsg* msg)
 {
@@ -62,14 +69,14 @@ void Game::join_update(int fd, general::JoinMsg* msg)
         msg_queue.push_back(msg_to_send);
     }
 }
-void Game::player_leave(int fd, general::LeaveMsg* msg)
+void Game::player_leave(int fd)
 {
     for(std::map<int, Player*>::iterator it = players.begin(); it != players.end(); ++it)
     {
         if(it->first == fd)
             continue;
         Player *receiver = players[it->first];
-        general::PlayerLeaveMsg update = general::get_leavePlayer(msg->head.id, receiver->get_seq_no()+1);
+        general::PlayerLeaveMsg update = general::get_leavePlayer(players[fd]->get_id(), receiver->get_seq_no()+1);
         receiver->set_seq_no(receiver->get_seq_no()+1);
         MsgToSend msg_to_send;
         memcpy(msg_to_send.msg, &update, sizeof(update));
@@ -77,6 +84,7 @@ void Game::player_leave(int fd, general::LeaveMsg* msg)
         msg_to_send.size = sizeof(update);
         msg_queue.push_back(msg_to_send);
     }
+    remove_player(fd);
 }
 
 void Game::new_player_pos(int fd, general::MoveEvent* msg)
@@ -99,20 +107,26 @@ void Game::new_player_pos(int fd, general::MoveEvent* msg)
 void Game::send_queued_msg()
 {
     int n_msg = this->msg_queue.size();
-    printf("msg in queue: %d", n_msg);
+    printf("msg in queue: %d\n", n_msg);
     for(int i = 0; i <n_msg; i++)
     {
         MsgToSend msg = msg_queue.front();
         msg_queue.pop_front();
-        int res = this->net.response(msg.msg, msg.size, msg.fd);
-        if(res == -1)
-        {
-            printf("Error in send \n");
-        }
-        else if (res == 0)
-        {
-            printf("Msg back to queue\n");
-            msg_queue.push_back(msg);
+        if(msg.fd != -1){
+            int res = this->net.response(msg.msg, msg.size, msg.fd);
+            if(res == -1)
+            {
+                printf("Error in send \n");
+            }
+            else if (res == 0)
+            {
+                printf("Msg back to queue\n");
+                msg_queue.push_back(msg);
+            }
+            else
+            {
+                printf("Msg sent\n");
+            }
         }
     }
     

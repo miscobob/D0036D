@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <unistd.h>
 #include <poll.h>
 
@@ -23,6 +23,7 @@ class Game;
 static const int MAX_CONNECTION = 10;
 static const int TIME_OUT = 1000;
 static const int BUFF_SIZE = 112;
+static const int PORT = 55226;
 class Network
 {
 private:
@@ -39,6 +40,7 @@ private:
 public:
     Network();
     ~Network();
+    void setup(std::string ip);
     void poll_fds(Game *state);
     void quit(const char* message, int status);
     /**

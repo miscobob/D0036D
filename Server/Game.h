@@ -28,16 +28,16 @@ private:
     Network net;
     bool run = false;
     std::list<MsgToSend> msg_queue;
+    void remove_player(int fd);
 public:
     //Map of all players key is the fd for that player
     std::map<int,Player*> players;
-    Game();
+    Game(std::string ip);
     ~Game();
     void start();
-    void remove_player(int fd);
     void player_join(int fd, general::JoinMsg* msg);
     void join_update(int fd, general::JoinMsg* msg);
-    void player_leave(int fd, general::LeaveMsg *msg);
+    void player_leave(int fd);
     void new_player_pos(int fd, general::MoveEvent *msg);
     void quit(int status);
     void send_queued_msg();
