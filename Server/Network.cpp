@@ -2,13 +2,17 @@
 #include "Network.h"
 #include <stdexcept>
 #include <fcntl.h>
-#include <string>
 #include "../General/Protocol.h"
 #include "Game.h"
 #include <iostream>
 
 namespace server{
 Network::Network()
+{
+    
+}
+
+void Network::setup(std::string ip)
 {
     this->socket_fd =  socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (this->socket_fd == -1) {
@@ -31,8 +35,8 @@ Network::Network()
     //printf("1");
     memset(&this->sa, 0, sizeof(sa));
     this->sa.sin_family = AF_INET;
-    this->sa.sin_port = htons(55226);
-    inet_pton(AF_INET, "192.168.1.13", &(sa.sin_addr));
+    this->sa.sin_port = htons(PORT);
+    inet_pton(AF_INET, ip.c_str(), &(sa.sin_addr));
     //this->sa.sin_addr.s_addr = htonl(INADDR_ANY);
     //printf("2");
     if (bind(this->socket_fd,(struct sockaddr *)&this->sa, sizeof(this->sa)) == -1) {
@@ -208,7 +212,7 @@ void Network::poll_fds(Game *state)
                             if(msg->type == general::EventType::Move)
                             {
                                 general::MoveEvent * move_msg =(general::MoveEvent*)buf;
-                                printf("got a event msg %d\n", (int)msg->type);
+                                printf("got a move msg\n");
                                 state->new_player_pos(this->fd_read_set[i].fd, move_msg);
                             }
                         }
@@ -216,7 +220,7 @@ void Network::poll_fds(Game *state)
                         {
                             general::LeaveMsg* msg =(general::LeaveMsg*)buf;
                             printf("got a leave msg\n");
-                            state->player_leave(this->fd_read_set[i].fd, msg);
+                            state->player_leave(this->fd_read_set[i].fd);
                         }
                         else if (general::MsgType::TextMessage == head->type)
                         {
@@ -236,6 +240,7 @@ void Network::poll_fds(Game *state)
             //if(this->fd_read_set[i].revents&POLLRDHUP == POLLRDHUP)
             if((this->fd_read_set[i].revents&POLLRDHUP) == POLLRDHUP && i != 0)
             {
+                state->player_leave(fd_read_set[i].fd);
                 this->close_fd(i);
             }
             this->fd_read_set[i].revents = 0;
@@ -276,7 +281,7 @@ int Network::response(char *msg, size_t size, int fd)
         {
             if(fd_read_set[i].fd == fd)
             {
-                printf("closing bad");
+                //printf("closing bad");
                 fd_i = i;
                 close_fd(fd_i);
                 return -1;
@@ -284,7 +289,7 @@ int Network::response(char *msg, size_t size, int fd)
 
         }
     }
-    if(check.revents == POLLOUT)
+    if((check.revents&POLLOUT) == POLLOUT)
     {
         send(fd, msg, size, 0);
         std::cout << "Sent msg: " << msg << std::endl;
