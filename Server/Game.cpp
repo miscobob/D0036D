@@ -71,6 +71,8 @@ void Game::join_update(int fd, general::JoinMsg* msg)
 }
 void Game::player_leave(int fd)
 {
+	if(players.count(fd) == 0)
+		return;
     for(std::map<int, Player*>::iterator it = players.begin(); it != players.end(); ++it)
     {
         if(it->first == fd)

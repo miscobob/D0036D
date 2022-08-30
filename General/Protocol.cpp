@@ -15,7 +15,7 @@ namespace general{
     {
         JoinMsg msg;
         msg.head = get_head(0,0, MsgType::Join);
-        strcpy(msg.name, name.c_str());
+        strcpy_s(msg.name, name.c_str());
         msg.desc = ObjectDesc::Human;
         msg.form = ObjectForm::Cube;
         msg.head.length = sizeof(msg);
@@ -47,7 +47,7 @@ namespace general{
     {
         TextMessageMsg msg;
         msg.head = get_head(id, seq_no, MsgType::TextMessage);
-        strcpy(msg.text, text.c_str());
+        strcpy_s(msg.text, text.c_str());
         return msg;
     }
 
@@ -57,7 +57,7 @@ namespace general{
         msg.msg = get_change(id, seq_no, ChangeType::NewPlayer);
         msg.desc = desc;
         msg.form = form;
-        strcpy(msg.name, name.c_str());
+        strcpy_s(msg.name, name.c_str());
         msg.msg.head.length = sizeof(msg);
         return msg;
 
